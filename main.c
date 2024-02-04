@@ -111,7 +111,7 @@ snake* get_tail(snake *pOG)
 void display(char grid[SIZE][SIZE], snake *p, kaching *k)
 // display the game
 {
-    //printf("\e[1;1H\e[2J");     // scroll to the new display
+    printf("\e[1;1H\e[2J");     // scroll to the new display
 
     for (int i=0; i<SIZE; i++) {
         for (int j=0; j<SIZE; j++) {
