@@ -100,14 +100,18 @@ void move_snake(int newX, int newY, snake *pOG)
 snake* get_tail(snake *pOG)
 // return the tail of the snake.
 {
-    
+    snake *p = pOG;
+    while (p->next != NULL) {
+        p = p->next;
+    }
+    return p;
 }
 
 
 void display(char grid[SIZE][SIZE], snake *p, kaching *k)
 // display the game
 {
-    printf("\e[1;1H\e[2J");     // scroll to the new display
+    //printf("\e[1;1H\e[2J");     // scroll to the new display
 
     for (int i=0; i<SIZE; i++) {
         for (int j=0; j<SIZE; j++) {
@@ -167,20 +171,25 @@ int main()
             else if (command == 'd') {   // 'd' to go right
                 newY = p1->y+1;
             }
-            isInput=1;fseek(stdin,0,SEEK_END);
+            isInput=1;
             fflush(stdin);
         }
 
+        
+        snake *lastBeforeMove;  // variable to get the tail
+
         if (0 < newX && newX < SIZE-1 && 0 < newY && newY < SIZE-1) {   // verify if new coor is correct
+            lastBeforeMove = get_tail(p1);   // get the tail of the snake (for the grow)
             move_snake(newX, newY, p1);
         }
-        
+
         if (p1->x == k->x && p1->y == k->y) {   // if snake on ka-ching
-            printf("Ka-ching collected !");
+            grow_snake(lastBeforeMove->x, lastBeforeMove->y, p1);
         }
 
         display(grid, p1, k);   // display the game
         
     }
+
     return 0;
 }
