@@ -33,6 +33,18 @@ snake* new_snake(int x, int y, snake *next)
 }
 
 
+int len_snake(snake *pOG)
+{
+    snake *p = pOG;
+    int len = 0;
+    while (p!= NULL) {
+        len++;
+        p = p->next;
+    }
+    return len;
+}
+
+
 void grow_snake(int x, int y, snake *pOG)
 // make the snake grow by adding one more cell.
 {
@@ -40,7 +52,9 @@ void grow_snake(int x, int y, snake *pOG)
     while(p->next != NULL) {
         p = p->next;
     }
-    p->next = new_snake(x, y, NULL);
+    snake *newP;
+    newP = new_snake(x, y, NULL);
+    p->next = newP;
 }
 
 
@@ -91,6 +105,7 @@ void move_snake(int newX, int newY, snake *pOG)
 
         p->x = x;
         p->y = y;
+        
     }
     pOG->x = newX;
     pOG->y = newY;
@@ -111,7 +126,7 @@ snake* get_tail(snake *pOG)
 void display(char grid[SIZE][SIZE], snake *p, kaching *k)
 // display the game
 {
-    printf("\e[1;1H\e[2J");     // scroll to the new display
+    //printf("\e[1;1H\e[2J");     // scroll to the new display
 
     for (int i=0; i<SIZE; i++) {
         for (int j=0; j<SIZE; j++) {
@@ -140,7 +155,7 @@ int main()
     prepare_grid(grid);
 
     snake *p1;                  // prepare thr player
-    p1 = new_snake(1, 2, new_snake(1, 1, NULL));
+    p1 = new_snake(1, 4, new_snake(1, 3, new_snake(1, 2, new_snake(1, 1, NULL))));
 
     kaching *k = malloc(sizeof(kaching));   // prepare ka-ching
     k->x = 2;
@@ -178,7 +193,7 @@ int main()
         
         snake *lastBeforeMove;  // variable to get the tail
 
-        if (0 < newX && newX < SIZE-1 && 0 < newY && newY < SIZE-1) {   // verify if new coor is correct
+        if (grid[newX][newY] != '#') {   // verify if new coor is correct
             lastBeforeMove = get_tail(p1);   // get the tail of the snake (for the grow)
             move_snake(newX, newY, p1);
         }
@@ -188,6 +203,7 @@ int main()
         }
 
         display(grid, p1, k);   // display the game
+        printf("%d\n", len_snake(p1));
         
     }
 
