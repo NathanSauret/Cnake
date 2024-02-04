@@ -98,14 +98,12 @@ void move_snake(int newX, int newY, snake *pOG)
     snake *p = pOG;
 
     while (p->next != NULL) {
-        int x = p->x;
-        int y = p->y;
+        int x=
+
+        p->next->x = p->x;
+        p->next->y = p->y;
 
         p = p->next;
-
-        p->x = x;
-        p->y = y;
-        
     }
     pOG->x = newX;
     pOG->y = newY;
@@ -203,7 +201,6 @@ int main()
         }
 
         display(grid, p1, k);   // display the game
-        printf("%d\n", len_snake(p1));
         
     }
 
