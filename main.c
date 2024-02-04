@@ -33,6 +33,17 @@ snake* new_snake(int x, int y, snake *next)
 }
 
 
+void grow_snake(int x, int y, snake *pOG)
+// make the snake grow by adding one more cell.
+{
+    snake *p = pOG;
+    while(p->next != NULL) {
+        p = p->next;
+    }
+    p->next = new_snake(x, y, NULL);
+}
+
+
 void prepare_grid(char grid[SIZE][SIZE])
 // prepare the grid with walls
 {
@@ -53,7 +64,7 @@ void prepare_grid(char grid[SIZE][SIZE])
 }
 
 
-int isSnake(int x, int y, snake *pOG)
+int is_snake(int x, int y, snake *pOG)
 // return 1 if (solid)snake is found at [x,y] coor, else 0.
 {
     snake *p = pOG;
@@ -67,13 +78,41 @@ int isSnake(int x, int y, snake *pOG)
 }
 
 
+void move_snake(int newX, int newY, snake *pOG)
+// move snake to a new coor.
+{
+    snake *p = pOG;
+
+    while (p->next != NULL) {
+        int x = p->x;
+        int y = p->y;
+
+        p = p->next;
+
+        p->x = x;
+        p->y = y;
+    }
+    pOG->x = newX;
+    pOG->y = newY;
+}
+
+
+snake* get_tail(snake *pOG)
+// return the tail of the snake.
+{
+    
+}
+
+
 void display(char grid[SIZE][SIZE], snake *p, kaching *k)
 // display the game
 {
+    printf("\e[1;1H\e[2J");     // scroll to the new display
+
     for (int i=0; i<SIZE; i++) {
         for (int j=0; j<SIZE; j++) {
 
-            if (isSnake(i, j, p)) {
+            if (is_snake(i, j, p)) {
                 printf("* ");
             }
             else if (k->x == i && k->y == j) {
@@ -85,6 +124,8 @@ void display(char grid[SIZE][SIZE], snake *p, kaching *k)
         }
         printf("\n");
     }
+    printf("zqsd to move | Ctrl+c to quit\n");
+    printf("input = ");
 }
 
 
@@ -95,7 +136,7 @@ int main()
     prepare_grid(grid);
 
     snake *p1;                  // prepare thr player
-    p1 = new_snake(1, 1, NULL);
+    p1 = new_snake(1, 2, new_snake(1, 1, NULL));
 
     kaching *k = malloc(sizeof(kaching));   // prepare ka-ching
     k->x = 2;
@@ -126,17 +167,19 @@ int main()
             else if (command == 'd') {   // 'd' to go right
                 newY = p1->y+1;
             }
-            isInput=1;
+            isInput=1;fseek(stdin,0,SEEK_END);
             fflush(stdin);
         }
 
         if (0 < newX && newX < SIZE-1 && 0 < newY && newY < SIZE-1) {   // verify if new coor is correct
-            p1->x = newX;
-            p1->y = newY;
+            move_snake(newX, newY, p1);
         }
-        printf("%d | %d\n", newX, newY);
+        
+        if (p1->x == k->x && p1->y == k->y) {   // if snake on ka-ching
+            printf("Ka-ching collected !");
+        }
 
-        display(grid, p1, k);
+        display(grid, p1, k);   // display the game
         
     }
     return 0;
