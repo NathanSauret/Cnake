@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 
 int SIZE = 10;
@@ -7,6 +8,7 @@ int SIZE = 10;
 
 typedef struct snake snake;
 struct snake {
+    snake *prev;
     int x;
     int y;
     snake *next;
@@ -20,7 +22,7 @@ struct kaching {
 };
 
 
-snake* new_snake(int x, int y, snake *next)
+snake* new_snake(snake *prev, int x, int y, snake *next)
 // add a snake
 {
     snake *el;
@@ -28,6 +30,7 @@ snake* new_snake(int x, int y, snake *next)
     el = malloc(sizeof(snake));
     el->x = x;
     el->y = y;
+    el->prev = prev;
     el->next = next;
     return el;
 }
@@ -53,7 +56,7 @@ void grow_snake(int x, int y, snake *pOG)
         p = p->next;
     }
     snake *newP;
-    newP = new_snake(x, y, NULL);
+    newP = new_snake(p, x, y, NULL);
     p->next = newP;
 }
 
@@ -92,24 +95,6 @@ int is_snake(int x, int y, snake *pOG)
 }
 
 
-void move_snake(int newX, int newY, snake *pOG)
-// move snake to a new coor.
-{
-    snake *p = pOG;
-
-    while (p->next != NULL) {
-        int x=
-
-        p->next->x = p->x;
-        p->next->y = p->y;
-
-        p = p->next;
-    }
-    pOG->x = newX;
-    pOG->y = newY;
-}
-
-
 snake* get_tail(snake *pOG)
 // return the tail of the snake.
 {
@@ -118,6 +103,24 @@ snake* get_tail(snake *pOG)
         p = p->next;
     }
     return p;
+}
+
+
+void move_snake(int newX, int newY, snake *pOG)
+// move snake to a new coor.
+{
+    
+    snake *p = get_tail(pOG);
+
+    while (p->prev != NULL) {
+        p->x = p->prev->x;
+        p->y = p->prev->y;
+        
+        p = p->prev;
+    }
+    pOG->x = newX;
+    pOG->y = newY;
+
 }
 
 
@@ -149,15 +152,30 @@ void display(char grid[SIZE][SIZE], snake *p, kaching *k)
 
 int main()
 {
+    srand(time(0));
+
     char grid[SIZE][SIZE];  // prepare the grid
     prepare_grid(grid);
 
-    snake *p1;                  // prepare thr player
-    p1 = new_snake(1, 4, new_snake(1, 3, new_snake(1, 2, new_snake(1, 1, NULL))));
-
     kaching *k = malloc(sizeof(kaching));   // prepare ka-ching
-    k->x = 2;
-    k->y = 2;
+    int kX = 0;
+    int kY = 0;
+    while (grid[kX][kY] == '#') {
+        kX = rand() % SIZE; 
+        kY = rand() % SIZE;
+    }
+    k->x = kX;
+    k->y = kY;
+
+    snake *p1;                  // prepare the player
+
+    int sX = k->x;
+    int sY = k->y;
+    while (sX == k->x && sY == k->y && grid[sX][sY] == '#') {
+        sX = rand() % SIZE-1;
+        sY = rand() % SIZE-1;
+    }
+    p1 = new_snake(NULL, sX, sY, NULL);
 
     int isAlive = 1;    // variable that indicate if the player is alive
 
