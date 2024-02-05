@@ -324,7 +324,7 @@ int main()
                 else if (command == 'q') {
                     free_snake(p1);     // free memory taken by snake
                     printf("\e[1;1H\e[2J");     // scroll to the new display
-                    break;
+                    exit(1);
                 }
             }
             break;
@@ -348,7 +348,7 @@ int main()
                 else if (command == 'q') {
                     free_snake(p1);     // free memory taken by snake
                     printf("\e[1;1H\e[2J");     // scroll to the new display
-                    break;
+                    exit(1);
                 }
             }
             break;
