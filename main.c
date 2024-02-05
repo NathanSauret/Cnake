@@ -247,25 +247,25 @@ int main()
 
             command=getchar();
 
-            if (command == 'z') {       // 'z' to go up
+            if (command == 'z' && SNAKE_DIR != 'd') {       // 'z' to go up
                 newX = p1->x-1;
                 SNAKE_DIR = 'u';
                 isInput=1;
                 break;
             }
-            else if (command == 's') {   // 's' to go down
+            else if (command == 's' && SNAKE_DIR != 'u') {   // 's' to go down
                 newX = p1->x+1;
                 SNAKE_DIR = 'd';
                 isInput=1;
                 break;
             }
-            else if (command == 'q') {   // 'q' to go left
+            else if (command == 'q' && SNAKE_DIR != 'r') {   // 'q' to go left
                 newY = p1->y-1;
                 SNAKE_DIR = 'l';
                 isInput=1;
                 break;
             }
-            else if (command == 'd') {   // 'd' to go right
+            else if (command == 'd' && SNAKE_DIR != 'l') {   // 'd' to go right
                 newY = p1->y+1;
                 SNAKE_DIR = 'r';
                 isInput=1;
