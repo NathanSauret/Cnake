@@ -144,7 +144,7 @@ void move_kaching(kaching *k, snake *p)
         k->y = (rand() % (SIZE-2)) + 1;
     }
 }
-
+ 
 
 void display(char grid[SIZE][SIZE], snake *p, kaching *k)
 // display the game
