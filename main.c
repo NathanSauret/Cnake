@@ -1,9 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <termios.h>
+#include <unistd.h>
 
 
 int SIZE = 10;
+char SNAKE_DIR = 'N';
 
 
 typedef struct snake snake;
@@ -106,6 +109,17 @@ snake* get_tail(snake *pOG)
 }
 
 
+snake* get_head(snake *pOG)
+// return the head of the snake.
+{
+    snake *p = pOG;
+    while (p->prev != NULL) {
+        p = p->prev;
+    }
+    return p;
+}
+
+
 void move_snake(int newX, int newY, snake *pOG)
 // move snake to a new coor.
 {
@@ -120,25 +134,52 @@ void move_snake(int newX, int newY, snake *pOG)
     }
     pOG->x = newX;
     pOG->y = newY;
+}
 
+void move_kaching(kaching *k, snake *p)
+// move the kaching to new coor, can't be in snake
+{
+    while (is_snake(k->x, k->y, p)) {       // generate random coor until not in snake
+        k->x = (rand() % (SIZE-2)) + 1;
+        k->y = (rand() % (SIZE-2)) + 1;
+    }
 }
 
 
 void display(char grid[SIZE][SIZE], snake *p, kaching *k)
 // display the game
 {
-    //printf("\e[1;1H\e[2J");     // scroll to the new display
+    printf("\e[1;1H\e[2J");     // scroll to the new display
 
     for (int i=0; i<SIZE; i++) {
         for (int j=0; j<SIZE; j++) {
 
-            if (is_snake(i, j, p)) {
-                printf("* ");
+            if (is_snake(i, j, p)) {                // snake
+                if (get_head(p)->x == i && get_head(p)->y == j) {   // only if head -> <>v^
+                    if (SNAKE_DIR == 'u') {
+                        printf("⌃ ");
+                    }
+                    else if (SNAKE_DIR == 'd') {
+                        printf("v ");
+                    }
+                    else if (SNAKE_DIR == 'l') {
+                        printf("< ");
+                    }
+                    else if (SNAKE_DIR == 'r') {
+                        printf("> ");
+                    }
+                    else {
+                        printf("O ");
+                    }
+                }
+                else {                                              // else -> *
+                    printf("* ");
+                }
             }
-            else if (k->x == i && k->y == j) {
-                printf("@ ");
+            else if (k->x == i && k->y == j) {      // kaching
+                printf("K ");
             }
-            else {
+            else {                                  // the grid background
                 printf("%c ",grid[i][j]);
             }
         }
@@ -149,78 +190,129 @@ void display(char grid[SIZE][SIZE], snake *p, kaching *k)
 }
 
 
+void free_snake(snake *p)
+// free a list.
+{
+    snake *tmp;
+    while (p != NULL) {
+        tmp = p->next;
+        free(p);
+        p = tmp;
+    }
+}
+
 
 int main()
 {
-    srand(time(0));
+    srand(time(0)); // for random numbers
 
-    char grid[SIZE][SIZE];  // prepare the grid
+    static struct termios oldt, newt;       // for instant input
+    tcgetattr( STDIN_FILENO, &oldt);
+    newt = oldt;
+    newt.c_lflag &= ~(ICANON);
+    tcsetattr( STDIN_FILENO, TCSANOW, &newt);
+
+
+    char grid[SIZE][SIZE];      // prepare the grid
     prepare_grid(grid);
 
     kaching *k = malloc(sizeof(kaching));   // prepare ka-ching
-    int kX = 0;
-    int kY = 0;
-    while (grid[kX][kY] == '#') {
-        kX = rand() % SIZE; 
-        kY = rand() % SIZE;
-    }
-    k->x = kX;
-    k->y = kY;
+    k->x = (rand() % (SIZE-2)) + 1;
+    k->y = (rand() % (SIZE-2)) + 1;
 
-    snake *p1;                  // prepare the player
-
-    int sX = k->x;
-    int sY = k->y;
-    while (sX == k->x && sY == k->y && grid[sX][sY] == '#') {
-        sX = rand() % SIZE-1;
-        sY = rand() % SIZE-1;
+    snake *p1;    
+    int randX = k->x;
+    int randY = k->y;                          // prepare the player
+    while (randX == k->x && randY == k->y) {
+        randX = (rand() % (SIZE-2)) + 1;
+        randY = (rand() % (SIZE-2)) + 1;
     }
-    p1 = new_snake(NULL, sX, sY, NULL);
+    p1 = new_snake(NULL, randX, randY, NULL);
+
+
 
     int isAlive = 1;    // variable that indicate if the player is alive
 
     display(grid, p1, k);
 
-    while(isAlive) {
-        char command;       // the command entered by user
+    while(isAlive) {     // the command entered by user
         int isInput = 0;    // bool to check if input
 
         int newX = p1->x;   // new coor, will be modified by user input
         int newY = p1->y;
 
+        char command;   // for user inputs
+
         while (isInput == 0) {
-            scanf("%s", &command);   // enter the command
+
+            command=getchar();
+
             if (command == 'z') {       // 'z' to go up
                 newX = p1->x-1;
+                SNAKE_DIR = 'u';
+                isInput=1;
+                break;
             }
             else if (command == 's') {   // 's' to go down
                 newX = p1->x+1;
+                SNAKE_DIR = 'd';
+                isInput=1;
+                break;
             }
             else if (command == 'q') {   // 'q' to go left
                 newY = p1->y-1;
+                SNAKE_DIR = 'l';
+                isInput=1;
+                break;
             }
             else if (command == 'd') {   // 'd' to go right
                 newY = p1->y+1;
+                SNAKE_DIR = 'r';
+                isInput=1;
+                break;
             }
-            isInput=1;
-            fflush(stdin);
         }
 
         
         snake *lastBeforeMove;  // variable to get the tail
 
         if (grid[newX][newY] != '#') {   // verify if new coor is correct
-            lastBeforeMove = get_tail(p1);   // get the tail of the snake (for the grow)
-            move_snake(newX, newY, p1);
+            if (len_snake(p1) > 2) {
+                if (!is_snake(get_head(p1)->x, get_head(p1)->y, p1->next->next)) {
+                    lastBeforeMove = get_tail(p1);   // get the tail of the snake (for the grow)
+                    move_snake(newX, newY, p1);
+                }
+                else {
+                    break;
+                }
+            }
+            else {
+                lastBeforeMove = get_tail(p1);   // get the tail of the snake (for the grow)
+                move_snake(newX, newY, p1);
+            }
+            
+        }
+        else {      // else game over
+            break;
         }
 
         if (p1->x == k->x && p1->y == k->y) {   // if snake on ka-ching
             grow_snake(lastBeforeMove->x, lastBeforeMove->y, p1);
+            move_kaching(k, p1);
         }
 
         display(grid, p1, k);   // display the game
         
     }
+
+    printf("\e[1;1H\e[2J");     // scroll to the new display
+
+    printf("Game Over !\n");                      // game over screen
+    printf("Your score : %d\n",len_snake(p1));
+
+    free_snake(p1);     // free memory taken by snake
+
+    tcsetattr( STDIN_FILENO, TCSANOW, &oldt);
 
     return 0;
 }
