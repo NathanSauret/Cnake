@@ -5,7 +5,7 @@
 #include <unistd.h>
 
 
-int SIZE = 10;
+int SIZE = 5;
 char SNAKE_DIR;
 
 
@@ -195,9 +195,9 @@ void intro()
     char command;
     while (command != '\n') {
         printf("\e[1;1H\e[2J");
-        printf("Cnake ©\n");
-        printf("Hello, the mighty patapon give to you the most important quest :\n");
-        printf("collect as much ka-chink as possible to make the patapon army grow !\n");
+        printf("Cnake ©\n\n\n");
+        printf("Hello little one, the mighty patapon give to you the most important quest :\n");
+        printf("collect as much ka-chink as possible to make the patapon army grow !\n\n");
         printf("press 'enter' to continue\n");
         command=getchar();
     }
@@ -310,6 +310,23 @@ int main()
             
         }
         else {      // else game over
+            while (1) {
+                printf("\e[1;1H\e[2J");     // scroll to the new display
+                printf("Game Over !\n");                // game over screen
+                printf("Your score : %d\n\n", len_snake(p1)-1);
+                printf("press 'r' to restart or 'q' to quit\n");
+
+                char command=getchar();
+                if (command == 'r') {
+                    free_snake(p1);     // free memory taken by snake
+                    main();
+                }
+                else if (command == 'q') {
+                    free_snake(p1);     // free memory taken by snake
+                    printf("\e[1;1H\e[2J");     // scroll to the new display
+                    break;
+                }
+            }
             break;
         }
 
@@ -317,30 +334,29 @@ int main()
             grow_snake(lastBeforeMove->x, lastBeforeMove->y, p1);
             move_kaching(k, p1);
         }
+        if (len_snake(p1) == ((SIZE-2)*(SIZE-2))) {
+            while (1) {
+                printf("\e[1;1H\e[2J");     // scroll to the new display
+                printf("Great job ! the patapon army is now ready to kick some ass\n\n");     // win screen
+                printf("press 'r' to restart or 'q' to quit\n");
+
+                char command=getchar();
+                if (command == 'r') {
+                    free_snake(p1);     // free memory taken by snake
+                    main();
+                }
+                else if (command == 'q') {
+                    free_snake(p1);     // free memory taken by snake
+                    printf("\e[1;1H\e[2J");     // scroll to the new display
+                    break;
+                }
+            }
+            break;
+        }
 
         display(grid, p1, k);   // display the game
         
     }
-
-    int score = len_snake(p1)-1;
-    free_snake(p1);     // free memory taken by snake
-
-    while (1) {
-        printf("\e[1;1H\e[2J");     // scroll to the new display
-        printf("Game Over !\n");                      // game over screen
-        printf("Your score : %d\n\n", score);
-        printf("press 'r' to restart or 'q' to quit\n");
-        char command=getchar();
-
-        if (command == 'r') {
-            main();
-        }
-        else if (command == 'q') {
-            printf("\e[1;1H\e[2J");     // scroll to the new display
-            break;
-        }
-    }
-
     tcsetattr( STDIN_FILENO, TCSANOW, &oldt);
 
     return 0;
