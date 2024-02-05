@@ -6,7 +6,7 @@
 
 
 int SIZE = 10;
-char SNAKE_DIR = 'N';
+char SNAKE_DIR;
 
 
 typedef struct snake snake;
@@ -157,27 +157,27 @@ void display(char grid[SIZE][SIZE], snake *p, kaching *k)
             if (is_snake(i, j, p)) {                // snake
                 if (get_head(p)->x == i && get_head(p)->y == j) {   // only if head -> <>v^
                     if (SNAKE_DIR == 'u') {
-                        printf("⌃ ");
+                        printf("▲ ");
                     }
                     else if (SNAKE_DIR == 'd') {
-                        printf("v ");
+                        printf("▼ ");
                     }
                     else if (SNAKE_DIR == 'l') {
-                        printf("< ");
+                        printf("◀ ");
                     }
                     else if (SNAKE_DIR == 'r') {
-                        printf("> ");
+                        printf("▶ ");
                     }
                     else {
-                        printf("O ");
+                        printf("◆ ");
                     }
                 }
                 else {                                              // else -> *
-                    printf("* ");
+                    printf("▢ ");
                 }
             }
             else if (k->x == i && k->y == j) {      // kaching
-                printf("K ");
+                printf("🄚 ");
             }
             else {                                  // the grid background
                 printf("%c ",grid[i][j]);
@@ -186,7 +186,21 @@ void display(char grid[SIZE][SIZE], snake *p, kaching *k)
         printf("\n");
     }
     printf("zqsd to move | Ctrl+c to quit\n");
-    printf("input = ");
+}
+
+
+void intro()
+// intro of the game.
+{
+    char command;
+    while (command != '\n') {
+        printf("\e[1;1H\e[2J");
+        printf("Cnake ©\n");
+        printf("Hello, the mighty patapon give to you the most important quest :\n");
+        printf("collect as much ka-chink as possible to make the patapon army grow !\n");
+        printf("press 'enter' to continue\n");
+        command=getchar();
+    }
 }
 
 
@@ -204,6 +218,8 @@ void free_snake(snake *p)
 
 int main()
 {
+    intro();
+
     srand(time(0)); // for random numbers
 
     static struct termios oldt, newt;       // for instant input
@@ -228,6 +244,7 @@ int main()
         randY = (rand() % (SIZE-2)) + 1;
     }
     p1 = new_snake(NULL, randX, randY, NULL);
+    SNAKE_DIR = 'N';
 
 
 
@@ -305,12 +322,24 @@ int main()
         
     }
 
-    printf("\e[1;1H\e[2J");     // scroll to the new display
-
-    printf("Game Over !\n");                      // game over screen
-    printf("Your score : %d\n",len_snake(p1));
-
+    int score = len_snake(p1)-1;
     free_snake(p1);     // free memory taken by snake
+
+    while (1) {
+        printf("\e[1;1H\e[2J");     // scroll to the new display
+        printf("Game Over !\n");                      // game over screen
+        printf("Your score : %d\n\n", score);
+        printf("press 'r' to restart or 'q' to quit\n");
+        char command=getchar();
+
+        if (command == 'r') {
+            main();
+        }
+        else if (command == 'q') {
+            printf("\e[1;1H\e[2J");     // scroll to the new display
+            break;
+        }
+    }
 
     tcsetattr( STDIN_FILENO, TCSANOW, &oldt);
 
