@@ -5,7 +5,7 @@
 #include <unistd.h>
 
 
-int SIZE = 5;
+int SIZE = 10;
 char SNAKE_DIR;
 
 
