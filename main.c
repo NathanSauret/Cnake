@@ -3,7 +3,7 @@
 #include <time.h>
 #include <termios.h>
 #include <unistd.h>
-
+ 
 
 int SIZE = 10;
 char SNAKE_DIR;
