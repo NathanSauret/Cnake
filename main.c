@@ -3,7 +3,8 @@
 #include <time.h>
 #include <termios.h>
 #include <unistd.h>
- 
+#include <curses.h>
+
 
 int SIZE = 10;
 char SNAKE_DIR;
@@ -149,7 +150,7 @@ void move_kaching(kaching *k, snake *p)
 void display(char grid[SIZE][SIZE], snake *p, kaching *k)
 // display the game
 {
-    printf("\e[1;1H\e[2J");     // scroll to the new display
+    printf("\e[1;1H\e[2J\r");     // scroll to the new display
 
     for (int i=0; i<SIZE; i++) {
         for (int j=0; j<SIZE; j++) {
@@ -183,9 +184,9 @@ void display(char grid[SIZE][SIZE], snake *p, kaching *k)
                 printf("%c ",grid[i][j]);
             }
         }
-        printf("\n");
+        printf("\n\r");
     }
-    printf("zqsd to move | Ctrl+c to quit\n");
+    printf("zqsd to move | Ctrl+c to quit\n\r");
 }
 
 
@@ -195,10 +196,10 @@ void intro()
     char command;
     while (command != '\n') {
         printf("\e[1;1H\e[2J");
-        printf("Cnake ©\n\n\n");
-        printf("Hello little one, the mighty patapon give to you the most important quest :\n");
-        printf("collect as much ka-chink as possible to make the patapon army grow !\n\n");
-        printf("press 'enter' to continue\n");
+        printf("Cnake ©\n\n\n\r");
+        printf("Hello little one, the mighty patapon give to you the most important quest :\n\r");
+        printf("collect as much ka-chink as possible to make the patapon army grow !\n\n\r");
+        printf("press 'enter' to continue\n\r");
         command=getchar();
     }
 }
@@ -218,16 +219,9 @@ void free_snake(snake *p)
 
 int main()
 {
-    intro();
+    intro();    // display the intro
 
     srand(time(0)); // for random numbers
-
-    static struct termios oldt, newt;       // for instant input
-    tcgetattr( STDIN_FILENO, &oldt);
-    newt = oldt;
-    newt.c_lflag &= ~(ICANON);
-    tcsetattr( STDIN_FILENO, TCSANOW, &newt);
-
 
     char grid[SIZE][SIZE];      // prepare the grid
     prepare_grid(grid);
@@ -249,115 +243,171 @@ int main()
 
 
     int isAlive = 1;    // variable that indicate if the player is alive
+    int pressed;        // for user inputs
 
     display(grid, p1, k);
 
+    WINDOW* win = initscr();    // setup for inputs
+    keypad(win, true);
+    nodelay(win, true);
+
+    int originalCooldown = 20;
+    int cooldown = originalCooldown;  // cooldown before making the snake go forward
+    int timeForSleep = 30000;
+    int snakeSpeed = 0;     // snake speed (start at 0)
+
     while(isAlive) {     // the command entered by user
-        int isInput = 0;    // bool to check if input
+        int isInput = 0;
 
         int newX = p1->x;   // new coor, will be modified by user input
         int newY = p1->y;
 
-        char command;   // for user inputs
+        pressed = wgetch(win);
 
-        while (isInput == 0) {
+        if (pressed == 'z' && SNAKE_DIR != 'd') {        // 'z' to go up
+            newX = p1->x-1;
+            SNAKE_DIR = 'u';
+            isInput = 1;
+            while (cooldown > 0) {
+                cooldown--;
+                usleep(timeForSleep);
+            }
 
-            command=getchar();
+        }
+        else if (pressed == 's' && SNAKE_DIR != 'u') {      // 's' to go down
+            newX = p1->x+1;
+            SNAKE_DIR = 'd';
+            isInput = 1;
+            while (cooldown > 0) {
+                cooldown--;
+                usleep(timeForSleep);
+            }
+        }
+        else if (pressed == 'q' && SNAKE_DIR != 'r') {      // 'q' to go left
+            newY = p1->y-1;
+            SNAKE_DIR = 'l';
+            isInput = 1;
+            while (cooldown > 0) {
+                cooldown--;
+                usleep(timeForSleep);
+            }
+        }
+        else if (pressed == 'd' && SNAKE_DIR != 'l') {     // 'd' to go right
+            newY = p1->y+1;
+            SNAKE_DIR = 'r';
+            isInput = 1;
+            while (cooldown > 0) {
+                cooldown--;
+                usleep(timeForSleep);
+            }
+        }
+        erase();
 
-            if (command == 'z' && SNAKE_DIR != 'd') {       // 'z' to go up
+        if (cooldown == 0) {
+            if (SNAKE_DIR == 'u') {
                 newX = p1->x-1;
-                SNAKE_DIR = 'u';
-                isInput=1;
-                break;
+                isInput = 1;
             }
-            else if (command == 's' && SNAKE_DIR != 'u') {   // 's' to go down
+            else if (SNAKE_DIR == 'd') {
                 newX = p1->x+1;
-                SNAKE_DIR = 'd';
-                isInput=1;
-                break;
+                isInput = 1;
             }
-            else if (command == 'q' && SNAKE_DIR != 'r') {   // 'q' to go left
+            else if (SNAKE_DIR == 'l') {
                 newY = p1->y-1;
-                SNAKE_DIR = 'l';
-                isInput=1;
-                break;
+                isInput = 1;
             }
-            else if (command == 'd' && SNAKE_DIR != 'l') {   // 'd' to go right
+            else if (SNAKE_DIR == 'r') {
                 newY = p1->y+1;
-                SNAKE_DIR = 'r';
-                isInput=1;
-                break;
+                isInput = 1;
             }
         }
 
-        
-        snake *lastBeforeMove;  // variable to get the tail
+        if ((isInput == 1 && cooldown == 0) || cooldown == 0) {
+            if (originalCooldown - snakeSpeed > 0) {
+                cooldown = originalCooldown - snakeSpeed;     // new cooldown, -snakeSpeed to speedup 
+            }
+            else {      // if cooldown too fast (originalCooldown - snakeSpeed <= 0)
+                cooldown = 1;
+            }
+            snake *lastBeforeMove;  // variable to get the tail
 
-        if (grid[newX][newY] != '#') {   // verify if new coor is correct
-            if (len_snake(p1) > 2) {
-                if (!is_snake(get_head(p1)->x, get_head(p1)->y, p1->next->next)) {
+            if (grid[newX][newY] != '#') {   // verify if new coor is correct
+                if (len_snake(p1) > 2) {
+                    if (!is_snake(get_head(p1)->x, get_head(p1)->y, p1->next->next)) {
+                        lastBeforeMove = get_tail(p1);   // get the tail of the snake (for the grow)
+                        move_snake(newX, newY, p1);
+                    }
+                    else {              // bite himself
+                        isAlive = 0;
+                    }
+                }
+                else {
                     lastBeforeMove = get_tail(p1);   // get the tail of the snake (for the grow)
                     move_snake(newX, newY, p1);
                 }
-                else {
-                    break;
-                }
+                
             }
-            else {
-                lastBeforeMove = get_tail(p1);   // get the tail of the snake (for the grow)
-                move_snake(newX, newY, p1);
+            else {              // touched a wall
+                isAlive = 0;
             }
-            
-        }
-        else {      // else game over
-            while (1) {
-                printf("\e[1;1H\e[2J");     // scroll to the new display
-                printf("Game Over !\n");                // game over screen
-                printf("Your score : %d\n\n", len_snake(p1)-1);
-                printf("press 'r' to restart or 'q' to quit\n");
 
-                char command=getchar();
-                if (command == 'r') {
-                    free_snake(p1);     // free memory taken by snake
-                    main();
-                }
-                else if (command == 'q') {
-                    free_snake(p1);     // free memory taken by snake
+            if (isAlive == 0) {      // else game over
+                while (1) {
                     printf("\e[1;1H\e[2J");     // scroll to the new display
-                    exit(1);
+                    printf("Game Over !\n\r");                // game over screen
+                    printf("Your score : %d\n\n\r", len_snake(p1)-1);
+                    printf("press 'r' to restart or 'q' to quit\n\r");
+
+                    char command=getchar();
+                    if (command == 'r') {
+                        free_snake(p1);     // free memory taken by snake
+                        endwin();
+                        main();
+                    }
+                    else if (command == 'q') {
+                        free_snake(p1);     // free memory taken by snake
+                        printf("\e[1;1H\e[2J");     // scroll to the new display
+                        endwin();
+                        exit(1);
+                    }
                 }
             }
-            break;
-        }
 
-        if (p1->x == k->x && p1->y == k->y) {   // if snake on ka-ching
-            grow_snake(lastBeforeMove->x, lastBeforeMove->y, p1);
-            move_kaching(k, p1);
-        }
-        if (len_snake(p1) == ((SIZE-2)*(SIZE-2))) {
-            while (1) {
-                printf("\e[1;1H\e[2J");     // scroll to the new display
-                printf("Great job ! the patapon army is now ready to kick some ass\n\n");     // win screen
-                printf("press 'r' to restart or 'q' to quit\n");
-
-                char command=getchar();
-                if (command == 'r') {
-                    free_snake(p1);     // free memory taken by snake
-                    main();
-                }
-                else if (command == 'q') {
-                    free_snake(p1);     // free memory taken by snake
+            if (p1->x == k->x && p1->y == k->y) {   // if snake on ka-ching
+                grow_snake(lastBeforeMove->x, lastBeforeMove->y, p1);
+                move_kaching(k, p1);
+                snakeSpeed++;
+            }
+            if (len_snake(p1) == ((SIZE-2)*(SIZE-2))) {
+                while (1) {
                     printf("\e[1;1H\e[2J");     // scroll to the new display
-                    exit(1);
+                    printf("Great job ! the patapon army is now ready to kick some ass\n\n\r");     // win screen
+                    printf("press 'r' to restart or 'q' to quit\n\r");
+
+                    char command=getchar();
+                    if (command == 'r') {
+                        free_snake(p1);     // free memory taken by snake
+                        endwin();
+                        main();
+                        
+                    }
+                    else if (command == 'q') {
+                        free_snake(p1);     // free memory taken by snake
+                        printf("\e[1;1H\e[2J");     // scroll to the new display
+                        endwin();
+                        exit(1);
+                    }
                 }
             }
-            break;
         }
 
         display(grid, p1, k);   // display the game
-        
+        refresh();
+        cooldown--;
+        printf("cooldown : %d\n\r", cooldown);
+        //printf("input : %d\n\r", isInput);
+        usleep(timeForSleep);
     }
-    tcsetattr( STDIN_FILENO, TCSANOW, &oldt);
 
     return 0;
 }
