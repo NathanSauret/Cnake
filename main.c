@@ -404,7 +404,7 @@ int main()
         display(grid, p1, k);   // display the game
         refresh();
         cooldown--;
-        printf("cooldown : %d\n\r", cooldown);
+        //printf("cooldown : %d\n\r", cooldown);
         //printf("input : %d\n\r", isInput);
         usleep(timeForSleep);
     }
