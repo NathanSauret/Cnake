@@ -5,7 +5,6 @@
 #include <unistd.h>
 #include <curses.h>
 
-
 int SIZE = 10;
 char SNAKE_DIR;
 
