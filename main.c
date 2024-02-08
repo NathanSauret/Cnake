@@ -344,7 +344,7 @@ int main()
                     lastBeforeMove = get_tail(p1);   // get the tail of the snake (for the grow)
                     move_snake(newX, newY, p1);
                 }
-                
+            
             }
             else {              // touched a wall
                 isAlive = 0;
